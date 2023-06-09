@@ -8,7 +8,7 @@ Repository Name: spicetify-updater
 
 **Description:**
 
-Simplify the process of updating Spicetify, a powerful customization utility for Spotify, with this command-line tool. Enhance your Spotify experience effortlessly.
+Simplify the process of updating Spicetify, a powerful customization utility for Spotify, with this command-line tool. Enhance your Spotify experience effortlessly. Also can download Spicetify for you!
 
 ---
 
