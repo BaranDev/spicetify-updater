@@ -1,3 +1,13 @@
+<<<<<<< HEAD
+**Instructions:**
+
+
+1. Download the latest release package for your operating system.
+2. Extract the contents to a convenient location.
+3. Run the Spicetify Updater CLI executable to begin the update process
+     3.5. Enjoy the music!
+4. Follow the prompts and enjoy the updated Spicetify experience on Spotify.
+=======
 # Spicetify Updater CLI
 
 ---
@@ -31,3 +41,4 @@ The Spicetify Updater CLI provides a convenient way to update Spicetify and its 
 
 - ASCII Art: [https://user.xmission.com/~emailbox](https://user.xmission.com/~emailbox)
 - Music: Pokemon Emerald - Littleroot Town *(played by me!)*
+>>>>>>> c38d1333b17b2294753a3a12dd98636c67d3892b

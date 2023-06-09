@@ -7,8 +7,8 @@ using System.Numerics;
 class Program
 { 
     static bool running = true;
-    public static SoundPlayer player = new SoundPlayer("Littleroot Town.wav");
-    public static string elapsedTime = "";
+    private static SoundPlayer player = new SoundPlayer("Resources\\Littleroot Town.wav");
+    public static string elapsedTime;
 
     static void Main(string[] args)
     {
@@ -30,7 +30,7 @@ class Program
             //if a is 1 play animation else exit
             if (a.KeyChar == '1')
             {
-                
+                //lower the players volume
                 player.Load();
                 player.PlayLooping();
                 ASCIIAnimation();
@@ -74,28 +74,38 @@ class Program
 
     static void RunPowerShellCommand(string command)
     {
-        ProcessStartInfo startInfo = new ProcessStartInfo
+        try
         {
-            FileName = "powershell.exe",
-            Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{command}\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
 
-        using (Process process = Process.Start(startInfo))
+
+            ProcessStartInfo startInfo = new ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{command}\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using (Process process = Process.Start(startInfo))
+            {
+                process.WaitForExit();
+
+                string output = process.StandardOutput.ReadToEnd();
+                string error = process.StandardError.ReadToEnd();
+
+                if (!string.IsNullOrWhiteSpace(output))
+                    Console.WriteLine(output);
+
+                if (!string.IsNullOrWhiteSpace(error))
+                    Console.WriteLine(error);
+            }
+        }
+        catch (Exception ex)
         {
-            process.WaitForExit();
-
-            string output = process.StandardOutput.ReadToEnd();
-            string error = process.StandardError.ReadToEnd();
-
-            if (!string.IsNullOrWhiteSpace(output))
-                Console.WriteLine(output);
-
-            if (!string.IsNullOrWhiteSpace(error))
-                Console.WriteLine(error);
+            Console.WriteLine("An error occurred while running the PowerShell command.");
+            Console.WriteLine(ex.Message);
         }
     }
 
@@ -129,14 +139,14 @@ class Program
 
                 stopwatch.Stop();
 
-                string output = process.StandardOutput.ReadToEnd();
-                string error = process.StandardError.ReadToEnd();
+                //string output = process.StandardOutput.ReadToEnd(); //escape sequence error
+                //string error = process.StandardError.ReadToEnd();
 
-                if (!string.IsNullOrWhiteSpace(output))
-                    Console.WriteLine(output);
+                //if (!string.IsNullOrWhiteSpace(output))
+                //    Console.WriteLine(output);
 
-                if (!string.IsNullOrWhiteSpace(error))
-                    Console.WriteLine(error);
+                //if (!string.IsNullOrWhiteSpace(error))
+                //    Console.WriteLine(error);
 
                 elapsedTime += stopwatch.Elapsed.Seconds + "." + stopwatch.Elapsed.Milliseconds + " seconds";
             }
