@@ -139,11 +139,21 @@ class Program
 
                 stopwatch.Stop();
 
-                //string output = process.StandardOutput.ReadToEnd(); //escape sequence error
+                string output = process.StandardOutput.ReadToEnd(); //escape sequence error
                 //string error = process.StandardError.ReadToEnd();
 
-                //if (!string.IsNullOrWhiteSpace(output))
-                //    Console.WriteLine(output);
+                if(arguments == "upgrade") 
+                {
+                    if (!string.IsNullOrWhiteSpace(output) && output.Contains("new version"))
+                    {
+                        Console.WriteLine("Update found. Updating to the latest version!\n");
+                    }
+                    else
+                    {
+                        Console.WriteLine("No updates found. Re-installing the latest version!\n");
+                    }
+                }
+
 
                 //if (!string.IsNullOrWhiteSpace(error))
                 //    Console.WriteLine(error);
@@ -153,7 +163,6 @@ class Program
         }
         catch (Exception ex)
         {
-            Console.SetWindowSize(160, 20);
             Console.WriteLine("An error occurred while running the Spicetify command. Make sure the Spicetify is correctly downloaded. Or click 1 to start the process to download Spicetify.");
             //readkey to start download
             var a = Console.ReadKey();
