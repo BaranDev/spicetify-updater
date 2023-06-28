@@ -18,9 +18,9 @@ class Program
         {
             // Step 1: Upgrade Spicetify using CLI
             Console.WriteLine("Updating Spicetify...");
-            RunSpicetifyCommand("restore backup");
+            RunSpicetifyCommand("restore");
             RunSpicetifyCommand("upgrade");
-            RunSpicetifyCommand("apply");
+            RunSpicetifyCommand("backup apply");
 
             Console.WriteLine("Spicetify upgrade completed successfully!");
             Console.WriteLine(
