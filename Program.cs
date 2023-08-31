@@ -9,31 +9,67 @@ class Program
     static bool running = true;
     private static SoundPlayer player = new SoundPlayer("Resources\\Littleroot Town.wav");
     public static string elapsedTime;
+    private static Stopwatch _stopwatch = new Stopwatch();
+    private static System.Timers.Timer timer = new System.Timers.Timer(1000); // 1 second interval
 
     static void Main(string[] args)
     {
         enteranceMenu();
-        Console.SetWindowSize(65,30);
         try
         {
             // Step 1: Upgrade Spicetify using CLI
             Console.WriteLine("Updating Spicetify...");
-            RunSpicetifyCommand("restore backup");
+            _stopwatch.Start();
             RunSpicetifyCommand("upgrade");
-            RunSpicetifyCommand("apply");
+            RunSpicetifyCommand("restore backup apply");
+
+            _stopwatch.Stop(); // Stop the _stopwatch
+            TimeSpan elapsed = _stopwatch.Elapsed;
 
             Console.WriteLine("Spicetify upgrade completed successfully!");
+            Console.WriteLine($"Elapsed Time: {elapsed.TotalSeconds.ToString("0.00")} seconds");
             Console.WriteLine(
                 "            .--------._\r\n           (`--'       `-.\r\n            `.______      `.\r\n         ___________`__     \\\r\n      ,-'           `-.\\     |\r\n     //                \\|    |\\\r\n    (`  .'~~~~~---\\     \\'   | |\r\n     `-'           )     \\   | |\r\n        ,---------' - -.  `  . '\r\n      ,'             ` `\\`     |\r\n     /                      \\  |\r\n    /     \\-----.         \\    `\r\n   /|  ,_/      '-._            |\r\n  (-'  /           /            `     \r\n  ,`--<           |        \\     \\\r\n  \\ |  \\         /               `\\\r\n   |/   \\____---'--`         \\     \\\r\n   |    '           `               \\\r\n   |\r\n    `--.__\r\n          `---._______\r\n                      `.\r\n                        \\  ");
-            Console.WriteLine("Press any key to exit or click 1 to see a cool cat animation!");
+            Console.WriteLine("Press any key to exit, click enter to update/install spicetify marketplace or click 1 to see a cool cat animation!");
             var a = Console.ReadKey();
             //if a is 1 play animation else exit
             if (a.KeyChar == '1')
             {
-                //lower the players volume
                 player.Load();
                 player.PlayLooping();
                 ASCIIAnimation();
+            }
+            else if (a.KeyChar == '\r')
+            {
+                Console.Clear();
+                Console.WriteLine("Installing Spicetify Marketplace...");
+
+                _stopwatch.Reset();
+                _stopwatch.Start();
+
+                RunPowerShellCommand("Invoke-WebRequest -UseBasicParsing \"https://raw.githubusercontent.com/spicetify/spicetify-marketplace/main/resources/install.ps1\" | Invoke-Expression");
+                Console.Clear();
+                Console.WriteLine("Spicetify Marketplace installed successfully!");
+
+                Console.WriteLine(
+                    "            .--------._\r\n           (`--'       `-.\r\n            `.______      `.\r\n         ___________`__     \\\r\n      ,-'           `-.\\     |\r\n     //                \\|    |\\\r\n    (`  .'~~~~~---\\     \\'   | |\r\n     `-'           )     \\   | |\r\n        ,---------' - -.  `  . '\r\n      ,'             ` `\\`     |\r\n     /                      \\  |\r\n    /     \\-----.         \\    `\r\n   /|  ,_/      '-._            |\r\n  (-'  /           /            `     \r\n  ,`--<           |        \\     \\\r\n  \\ |  \\         /               `\\\r\n   |/   \\____---'--`         \\     \\\r\n   |    '           `               \\\r\n   |\r\n    `--.__\r\n          `---._______\r\n                      `.\r\n                        \\  ");
+
+                _stopwatch.Stop();
+                elapsed = _stopwatch.Elapsed;
+                Console.WriteLine($"Elapsed Time: {elapsed.TotalSeconds.ToString("0.00")} seconds");
+
+                Console.WriteLine("Press any key to exit or click 1 to see a cool cat animation!");
+                a = Console.ReadKey();
+                if (a.KeyChar == '1')
+                {
+                    player.Load();
+                    player.PlayLooping();
+                    ASCIIAnimation();
+                }
+                else
+                {
+                    exit();
+                }
             }
             else
             {
@@ -54,17 +90,32 @@ class Program
 
     }
 
+
+    static async Task MonitorElapsedTime()
+    {
+        while (running)
+        {
+            await Task.Delay(1000); // Delay for 1 second
+            TimeSpan elapsed = _stopwatch.Elapsed;
+
+            if (elapsed.TotalMinutes >= 5)
+            {
+                Console.WriteLine("Can't automatically update. Manual update might be necessary.");
+                Console.ReadKey();
+                exit();
+            }
+        }
+    }
+
     static void exit()
     {
         Console.Clear();
-        Console.SetWindowSize(30, 15);
         Console.WriteLine(" __      __\r\n( _\\    /_ )\r\n \\ _\\  /_ / \r\n  \\ _\\/_ /_ _\r\n  |_____/_/ /|\r\n  (  (_)__)J-)\r\n  (  /`.,   /\r\n   \\/  ;   /\r\n    | === |");
         Thread.Sleep(500);
         Environment.Exit(0);
     }
     static void enteranceMenu()
     {
-        Console.SetWindowSize(45, 15);
         Console.WriteLine("\tWelcome to the Spicetify Updater!");
         Console.WriteLine("                   _\r\n               _  / |\r\n              / \\ | | /\\\r\n               \\ \\| |/ /\r\n                \\ Y | /___\r\n              .-.) '. `__/\r\n             (.-.   / /\r\n                 | ' |\r\n                 |___|\r\n                [_____]\r\n                |     |");
         Console.WriteLine("\tPress any key to start...");
@@ -132,28 +183,28 @@ class Program
 
             using (Process process = Process.Start(startInfo))
             {
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
-
                 process.WaitForExit();
 
-                stopwatch.Stop();
+                string output = process.StandardOutput.ReadToEnd(); //escape sequence error
 
-                //string output = process.StandardOutput.ReadToEnd(); //escape sequence error
-                //string error = process.StandardError.ReadToEnd();
+                if(arguments == "upgrade") 
+                {
+                    if (!string.IsNullOrWhiteSpace(output) && output.Contains("new version"))
+                    {
+                        Console.WriteLine("Update found. Updating to the latest version!\n");
+                    }
+                    else
+                    {
+                        Console.WriteLine("No updates found. Re-installing the latest version!\n");
+                    }
+                }
 
-                //if (!string.IsNullOrWhiteSpace(output))
-                //    Console.WriteLine(output);
 
-                //if (!string.IsNullOrWhiteSpace(error))
-                //    Console.WriteLine(error);
 
-                elapsedTime += stopwatch.Elapsed.Seconds + "." + stopwatch.Elapsed.Milliseconds + " seconds";
             }
         }
         catch (Exception ex)
         {
-            Console.SetWindowSize(160, 20);
             Console.WriteLine("An error occurred while running the Spicetify command. Make sure the Spicetify is correctly downloaded. Or click 1 to start the process to download Spicetify.");
             //readkey to start download
             var a = Console.ReadKey();
