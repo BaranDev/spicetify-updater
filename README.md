@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 **Instructions:**
 
 
@@ -41,4 +40,3 @@ The Spicetify Updater CLI provides a convenient way to update Spicetify and its 
 
 - ASCII Art: [https://user.xmission.com/~emailbox](https://user.xmission.com/~emailbox)
 - Music: Pokemon Emerald - Littleroot Town *(played by me!)*
->>>>>>> c38d1333b17b2294753a3a12dd98636c67d3892b
