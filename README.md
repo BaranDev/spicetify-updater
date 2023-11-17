@@ -6,7 +6,6 @@
 3. Run the Spicetify Updater CLI executable to begin the update process
      3.5. Enjoy the music!
 4. Follow the prompts and enjoy the updated Spicetify experience on Spotify.
-=======
 # Spicetify Updater CLI
 
 ---
