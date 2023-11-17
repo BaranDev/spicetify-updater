@@ -12,11 +12,12 @@ class Program
     private static Stopwatch _stopwatch = new Stopwatch();
     private static System.Timers.Timer timer = new System.Timers.Timer(1000); // 1 second interval
     private static bool debug = false;
-    private static TimeSpan elapsed;
+    private static TimeSpan elapsed = new TimeSpan(0, 0, 0);
 
     static void Main(string[] args)
     {
         enteranceMenu();
+        MonitorElapsedTime();
         try
         {
             // Step 1: Upgrade Spicetify using CLI
@@ -33,11 +34,13 @@ class Program
             else if (a.KeyChar == '\r')
             {
                 Console.Clear();
-                _stopwatch.Reset();
+
+                _stopwatch.Reset(); //timer for marketplace installation
                 _stopwatch.Start();
                 InstallMarketplace();
-                _stopwatch.Stop();
                 elapsed = _stopwatch.Elapsed;
+                _stopwatch.Stop();
+
                 Console.WriteLine($"Elapsed Time: {elapsed.TotalSeconds.ToString("0.00")} seconds");
 
                 Console.WriteLine("Press any key to exit or click 1 to see a cool cat animation!");
@@ -96,7 +99,6 @@ class Program
         while (running)
         {
             await Task.Delay(1000); // Delay for 1 second
-            elapsed = _stopwatch.Elapsed;
 
             if (elapsed.TotalMinutes >= 5)
             {
@@ -107,10 +109,15 @@ class Program
         }
     }
 
+    static void WriteByeASCII()
+    {
+        Console.WriteLine(" __      __\r\n( _\\    /_ )\r\n \\ _\\  /_ / \r\n  \\ _\\/_ /_ _\r\n  |_____/_/ /|\r\n  (  (_)__)J-)\r\n  (  /`.,   /\r\n   \\/  ;   /\r\n    | === |");
+    }
+
     static void exit()
     {
         Console.Clear();
-        Console.WriteLine(" __      __\r\n( _\\    /_ )\r\n \\ _\\  /_ / \r\n  \\ _\\/_ /_ _\r\n  |_____/_/ /|\r\n  (  (_)__)J-)\r\n  (  /`.,   /\r\n   \\/  ;   /\r\n    | === |");
+        WriteByeASCII();
         Thread.Sleep(500);
         Environment.Exit(0);
     }
@@ -147,7 +154,7 @@ class Program
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
-                CreateNoWindow = false
+                CreateNoWindow = true
             };
 
             using (Process process = Process.Start(startInfo))
@@ -173,7 +180,6 @@ class Program
                 }
 
                 process.WaitForExit(); // Wait for the process to exit
-
                 process.Close();
             }
         }
@@ -244,9 +250,8 @@ class Program
     {
         try
         {
-            if(!_stopwatch.IsRunning)
-                _stopwatch.Start();
-
+            _stopwatch.Reset(); //timer for spicetify installation
+            _stopwatch.Start();
             if (debug)
             {
                 Console.WriteLine("Press any key to start the installation...\n");
@@ -265,9 +270,6 @@ class Program
             Console.WriteLine(ex.Message);
             exit();
         }
-
-        if(_stopwatch.IsRunning)
-            _stopwatch.Stop();
     }
 
 
@@ -333,7 +335,6 @@ class Program
                     }
                     if (arguments == "upgrade")
                     {
-                        _stopwatch.Start(); //start timer
                         if (debug)
                         {
                             Console.WriteLine("Press any key to continue RunSpicetifyCommand with upgrade.\n");
@@ -343,13 +344,16 @@ class Program
                         {
                             Console.Clear();
                             Console.WriteLine("Update found. Updating to the latest version!\n");
+                            _stopwatch.Reset(); //timer for spicetify upgrade
+                            _stopwatch.Start();
                             installSpicetify();
                             RunSpicetifyCommand("restore backup apply");
+                            elapsed = _stopwatch.Elapsed;
+                            _stopwatch.Stop();
                             Console.WriteLine("Spicetify upgrade completed successfully!");
                             Console.WriteLine($"Elapsed Time: {elapsed.TotalSeconds.ToString("0.00")} seconds");
                             
                             PrintThumbsUp();
-                            _stopwatch.Reset();
                         }
                         else
                         {
@@ -360,12 +364,15 @@ class Program
                             {
                                 Console.Clear();
                                 Console.WriteLine("Reinstalling Spicetify...\n");
+                                _stopwatch.Reset(); //timer for spicetify upgrade
+                                _stopwatch.Start();
                                 installSpicetify();
                                 RunSpicetifyCommand("restore backup apply");
+                                elapsed = _stopwatch.Elapsed;
+                                _stopwatch.Stop();
                                 Console.WriteLine("Spicetify upgrade completed successfully!");
                                 Console.WriteLine($"Elapsed Time: {elapsed.TotalSeconds.ToString("0.00")} seconds");
                                 PrintThumbsUp();
-                                _stopwatch.Reset();
                             }
                             else if (a.KeyChar == '2')
                             {
