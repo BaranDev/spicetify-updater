@@ -6,6 +6,11 @@
 3. Run the Spicetify Updater CLI executable to begin the update/download process
      1. Enjoy the music!
 4. Follow the prompts and enjoy the updated Spicetify experience on Spotify.
+5. Create a desktop shortcut for `spicetify-updater.exe`:
+    1. *Right-click on the executable.*
+    2. *Navigate to "Send To".*
+    3. *Choose "Desktop (create shortcut)".*
+6. Enjoy!  
 # Spicetify Updater CLI
 
 ---
