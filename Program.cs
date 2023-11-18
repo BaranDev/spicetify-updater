@@ -319,7 +319,7 @@ class Program
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
-                    CreateNoWindow = true
+                    CreateNoWindow = false
                 };
                 using (Process process = Process.Start(startInfo))
                 {
@@ -393,11 +393,14 @@ class Program
                 }
                 else
                 {
-                    System.Console.WriteLine("Spicetify is not installed. Click 1 to download Spicetify.");
+                    System.Console.WriteLine("Spicetify is not installed. Click 1 to download Spicetify.\n");
                     var a = Console.ReadKey();
                     if (a.KeyChar == '1')
                     {
                         installSpicetify();
+                        RunSpicetifyCommand("backup apply");
+                        RunSpicetifyCommand("spicetify restore backup");
+                        RunSpicetifyCommand("spicetify backup");
                     }
                     else
                     {
