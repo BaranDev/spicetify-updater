@@ -1,154 +1,207 @@
-﻿using System;
-using System.Diagnostics;
-using System.Threading;
+﻿using System.Diagnostics;
 using System.Media;
-using System.Numerics;
+using System.Reflection;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
-class Program
-{
-    static bool running = true;
-    private static SoundPlayer player = new SoundPlayer("Resources\\Littleroot Town.wav");
-    private static Stopwatch _stopwatch = new Stopwatch();
-    private static System.Timers.Timer timer = new System.Timers.Timer(1000); // 1 second interval
-    private static bool debug = false;
-    private static TimeSpan elapsed = new TimeSpan(0, 0, 0);
+namespace SpicetifyUpdater;
 
-    static void Main(string[] args)
-    {
-        enteranceMenu();
-        MonitorElapsedTime();
-        try
-        {
-            // Step 1: Upgrade Spicetify using CLI
-            Console.WriteLine("Updating Spicetify...");
-            RunSpicetifyCommand("upgrade");
+public class Program {
+    private static bool _debug, _showBeginningAsciiArt = true;
+    public static bool IsWindows, IsPlayerRunning;
+    public static readonly SoundPlayer Player = new("Resources\\Littleroot Town.wav");
+    private static DateTime _dateTime;
+    private static string _lastOutput;
+    private static readonly ConsoleColor DefaultColor = Console.ForegroundColor;
 
-            Console.WriteLine("Press any key to exit, click enter to update/install spicetify marketplace or click 1 to see a cool cat animation!");
-            var a = Console.ReadKey();
-            //if a is 1 play animation else exit
-            if (a.KeyChar == '1')
-            {
-                StartASCIIAnimation();
-            }
-            else if (a.KeyChar == '\r')
-            {
-                Console.Clear();
-
-                _stopwatch.Reset(); //timer for marketplace installation
-                _stopwatch.Start();
-                InstallMarketplace();
-                elapsed = _stopwatch.Elapsed;
-                _stopwatch.Stop();
-
-                Console.WriteLine($"Elapsed Time: {elapsed.TotalSeconds.ToString("0.00")} seconds");
-
-                Console.WriteLine("Press any key to exit or click 1 to see a cool cat animation!");
-                a = Console.ReadKey();
-                if (a.KeyChar == '1')
-                {
-                    StartASCIIAnimation();
-                }
-                else
-                {
-                    exit();
-                }
-            }
-            else
-            {
-                Console.Clear();
-                exit();
-            }
-
-            running = false; // Stop the animation thread
+    private static bool IsSpicetifyUpToDate(bool showResult = true) {
+        var http = new HttpClient();
+        Api apiResponseJson;
+        try {
+            http.DefaultRequestHeaders.Add("User-Agent", $"Spicetify Updater/{Assembly.GetExecutingAssembly().GetName().Version}");
+            var output = http.GetStringAsync("https://api.github.com/repos/spicetify/spicetify-cli/releases/latest").GetAwaiter().GetResult();
+            apiResponseJson = JsonSerializer.Deserialize<Api>(output)!;
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine("An error occurred while upgrading Spicetify.");
-            Console.WriteLine(ex.Message);
-            running = false; // Stop the animation thread
+        catch (Exception e) {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("An error occurred while checking for Spicetify's GitHub API response.");
+            Console.WriteLine(e.Message);
+            Console.WriteLine(e.StackTrace);
+            Console.ForegroundColor = DefaultColor;
+            return false;
         }
-
-    }
-    static public void InstallMarketplace()
-    {
-        Console.WriteLine("Installing Spicetify Marketplace...");
-
-
-
-        RunPowerShellCommand("Invoke-WebRequest -UseBasicParsing \"https://raw.githubusercontent.com/spicetify/spicetify-marketplace/main/resources/install.ps1\" | Invoke-Expression");
-        Console.Clear();
-        Console.WriteLine("Spicetify Marketplace installed successfully!");
-        PrintThumbsUp();
-    }
-
-    static public void PrintThumbsUp()
-    {
-        Console.WriteLine("            .--------._\r\n           (`--'       `-.\r\n            `.______      `.\r\n         ___________`__     \\\r\n      ,-'           `-.\\     |\r\n     //                \\|    |\\\r\n    (`  .'~~~~~---\\     \\'   | |\r\n     `-'           )     \\   | |\r\n        ,---------' - -.  `  . '\r\n      ,'             ` `\\`     |\r\n     /                      \\  |\r\n    /     \\-----.         \\    `\r\n   /|  ,_/      '-._            |\r\n  (-'  /           /            `     \r\n  ,`--<           |        \\     \\\r\n  \\ |  \\         /               `\\\r\n   |/   \\____---'--`         \\     \\\r\n   |    '           `               \\\r\n   |\r\n    `--.__\r\n          `---._______\r\n                      `.\r\n                        \\  ");
-    }
-
-    static public void StartASCIIAnimation()
-    {
-        player.Load();
-        player.PlayLooping();
-        ASCIIAnimation();
-    }
-
-    static async Task MonitorElapsedTime()
-    {
-        while (running)
-        {
-            await Task.Delay(1000); // Delay for 1 second
-
-            if (elapsed.TotalMinutes >= 5)
-            {
-                Console.WriteLine("Can't automatically update. Manual update might be necessary.");
-                Console.ReadKey();
-                exit();
-            }
-        }
-    }
-
-    static void WriteByeASCII()
-    {
-        Console.WriteLine(" __      __\r\n( _\\    /_ )\r\n \\ _\\  /_ / \r\n  \\ _\\/_ /_ _\r\n  |_____/_/ /|\r\n  (  (_)__)J-)\r\n  (  /`.,   /\r\n   \\/  ;   /\r\n    | === |");
-    }
-
-    static void exit()
-    {
-        Console.Clear();
-        WriteByeASCII();
+        var latestVersion = apiResponseJson?.tag_name.Split('v')[1].Trim() ?? "null";
+        http.Dispose();
+        
+        RunSpicetifyCommand("-v", false, showResult);
         Thread.Sleep(500);
-        Environment.Exit(0);
-    }
-
-    static void enteranceMenu()
-    {
-        if (debug)
-        {
-            Console.WriteLine("Press any key to start the enterance menu...\n");
-            Console.ReadKey();
+        
+        if (showResult || _debug) {
+            Console.WriteLine($"Latest version: {latestVersion}");
+            Console.WriteLine($"Current version: {_lastOutput.Trim()}");
         }
 
-        Console.WriteLine("\tWelcome to the Spicetify Updater!");
-        Console.WriteLine("                   _\r\n               _  / |\r\n              / \\ | | /\\\r\n               \\ \\| |/ /\r\n                \\ Y | /___\r\n              .-.) '. `__/\r\n             (.-.   / /\r\n                 | ' |\r\n                 |___|\r\n                [_____]\r\n                |     |");
-        Console.WriteLine("\tPress any key to start...");
-        Console.ReadKey();
-        Console.Clear();
+        return latestVersion == _lastOutput.Trim();
     }
 
-    static void RunPowerShellCommand(string command)
-    {
-        try
-        {
-            if (debug)
-            {
+    private static bool IsSpicetifyInstalled() => Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Spicetify"));
+
+    public static void Main(string[]? args) {
+        IsWindows = Environment.OSVersion.ToString().Contains("windows", StringComparison.CurrentCultureIgnoreCase);
+        _debug = Environment.CommandLine.Contains("--debug");
+        start:
+        Console.Title = "Spicetify Updater";
+        Console.WriteLine("\tWelcome to the Spicetify Updater!");
+        Console.ForegroundColor = DefaultColor;
+        
+        if (_showBeginningAsciiArt) 
+            AsciiArt.Begin();
+        else _showBeginningAsciiArt = true;
+        
+        Console.WriteLine();
+        Console.WriteLine("Choose an option to get started");
+        if (IsSpicetifyInstalled())
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine("1. Install Spicetify");
+        Console.ForegroundColor = DefaultColor;
+        if (!IsSpicetifyInstalled())
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine("2. Update Spicetify");
+        Console.WriteLine("3. Install Spicetify Marketplace");
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine("4. See a cool cat animation");
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine("5. Exit");
+        Console.ForegroundColor = DefaultColor;
+        Console.Write("Enter your choice: ");
+        var choice = Console.ReadKey();
+        Console.WriteLine();
+        try {
+            switch (choice.KeyChar) {
+                case '1':
+                    // if already installed, tell user to not bother
+                    if (IsSpicetifyInstalled()) {
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine("Spicetify is already installed. Skipping...");
+                        Thread.Sleep(1400);
+                        Console.Clear();
+                        goto start;
+                    }
+
+                    // if not installed, install
+                    Console.WriteLine("Installing Spicetify...");
+                    Console.Title = "Spicetify Updater - Installing Spicetify";
+                    RunPowerShellCommand("iwr -useb https://raw.githubusercontent.com/spicetify/spicetify-cli/master/install.ps1 | iex");
+                    RunSpicetifyCommand("backup apply");
+                    RunSpicetifyCommand("spicetify restore backup");
+                    RunSpicetifyCommand("spicetify backup");
+                    goto start;
+                case '2':
+                    // if not installed, tell user to install it first
+                    if (!IsSpicetifyInstalled()) {
+                        Console.WriteLine("Spicetify is not installed. Please install it first.");
+                        goto start;
+                    }
+                    
+                    // if up to date, ask user if they want to reinstall
+                    if (IsSpicetifyUpToDate()) {
+                        Console.WriteLine("No update found.");
+                        Console.WriteLine("Do you want to re-install the latest version? (y/n)");
+                        var _ = Console.ReadKey();
+                        if (_.KeyChar == 'y') {
+                            Console.Clear();
+                            Console.Title = "Spicetify Updater - Reinstalling Spicetify";
+                            Console.WriteLine("Reinstalling Spicetify...");
+                            RunPowerShellCommand("iwr -useb https://raw.githubusercontent.com/spicetify/spicetify-cli/master/install.ps1 | iex");
+                            RunSpicetifyCommand("restore backup apply");
+                            goto start;
+                        }
+                        
+                        Console.Clear();
+                        goto start;
+                    }
+
+                    // if not up to date, update
+                    Console.WriteLine("Updating Spicetify...");
+                    Console.Title = "Spicetify Updater - Updating Spicetify";
+                    RunPowerShellCommand("upgrade");
+                    RunSpicetifyCommand("restore backup apply");
+                    break;
+                case '3':
+                    // Installs Spicetify Marketplace
+                    Console.Title = "Spicetify Updater - Installing Spicetify Marketplace";
+                    InstallMarketplace();
+                    break;
+                case '4':
+                    // Checks if user is on Windows, in-case this app gets ported for other OSes
+                    if (IsWindows) {
+                        Player.Load();
+                        Player.PlayLooping();
+                        IsPlayerRunning = true;
+                    }
+
+                    Console.Clear();
+                    AsciiArt.CatAnimation();
+                    break;
+                case 'i':
+                    // Just a ton of information
+                    Console.Write("Application Version: ");
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.WriteLine(Assembly.GetExecutingAssembly().GetName().Version!.ToString(3));
+                    Console.ForegroundColor = DefaultColor;
+                    Console.Write("Application Contributors: ");
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.Write("BaranDev (https://github.com/BaranDev)");
+                    Console.ForegroundColor = DefaultColor;
+                    Console.Write(" | ");
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("MintLily (https://github.com/MintLily)");
+                    Console.ForegroundColor = DefaultColor;
+                    Console.Write("IsWindows: ");
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.WriteLine(IsWindows);
+                    Console.ForegroundColor = DefaultColor;
+                    Console.Write("Spicetify Installed? ");
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.WriteLine(IsSpicetifyInstalled());
+                    Console.ForegroundColor = DefaultColor;
+                    Console.Write("Spicetify Updated? ");
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.WriteLine(IsSpicetifyUpToDate(false));
+                    Console.ForegroundColor = DefaultColor;
+                    goto start;
+                case 'e':
+                case '0':
+                case 'c':
+                case '5':
+                    // Environment.Exit(0);
+                    Exit();
+                    break;
+                default:
+                    Console.WriteLine("Invalid choice. Please try again.");
+                    Thread.Sleep(1400);
+                    Console.Clear();
+                    goto start;
+            }
+        }
+        catch (Exception e) {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("An error occurred while running the command. Try running the program as administrator.");
+            Console.WriteLine(e.Message);
+            Console.WriteLine(e.StackTrace);
+            Console.ForegroundColor = DefaultColor;
+            goto start;
+        }
+    }
+
+    private static void RunPowerShellCommand(string command) {
+        try {
+            if (_debug) {
                 Console.WriteLine($"Press any key to continue RunPowerShellCommand with ${command}.\n");
                 Console.ReadKey();
             }
 
-            ProcessStartInfo startInfo = new ProcessStartInfo
-            {
+            var startInfo = new ProcessStartInfo {
                 FileName = "powershell.exe",
                 Arguments = $"-Command \"{command}\"",
                 RedirectStandardOutput = true,
@@ -157,335 +210,96 @@ class Program
                 CreateNoWindow = true
             };
 
-            using (Process process = Process.Start(startInfo))
-            {
-                if (debug)
-                {
-                    Console.WriteLine("Press any key to continue RunPowerShellCommand after process.Start.\n");
-                    Console.ReadKey();
-                }
-                if (process == null)
-                    throw new Exception("Unable to start PowerShell process.");
+            using var process = Process.Start(startInfo);
 
-                string output = process.StandardOutput.ReadToEnd();
-                string error = process.StandardError.ReadToEnd();
-
-                if (debug)
-                {
-                    if (!string.IsNullOrWhiteSpace(output))
-                        Console.WriteLine(output);
-
-                    if (!string.IsNullOrWhiteSpace(error))
-                        Console.WriteLine(error);
-                }
-
-                process.WaitForExit(); // Wait for the process to exit
-                process.Close();
+            if (_debug) {
+                Console.WriteLine("Press any key to continue RunPowerShellCommand after process.Start.\n");
+                Console.ReadKey();
             }
+
+            if (process == null)
+                throw new Exception("Unable to start PowerShell process.");
+
+            var output = process.StandardOutput.ReadToEnd();
+            var error = process.StandardError.ReadToEnd();
+
+            if (!string.IsNullOrWhiteSpace(output))
+                Console.WriteLine(output);
+            if (!string.IsNullOrWhiteSpace(error))
+                Console.WriteLine(error);
+
+            process.WaitForExit(); // Wait for the process to exit
+            process.Close();
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("An error occurred while running the PowerShell command. Try running the program as administrator.");
             Console.WriteLine(ex.Message);
+            Console.WriteLine(ex.StackTrace);
+            Console.ForegroundColor = DefaultColor;
         }
     }
 
-
-    //parse function to get the version number
-    static string GetVersion(string input, string keyword)
-    {
-        if (debug)
-        {
-            Console.WriteLine("input: " + input);
-            Console.WriteLine("keyword: " + keyword);
-            Console.WriteLine("Press any key to continue GetVersion.\n");
-            Console.ReadKey();
-        }
-        // create a regular expression pattern to match the keyword and version number
-        string pattern = $@"{keyword}\s*([\d\.]+)";
-
-        // use Regex.Match to find the first match in the input string
-        Match match = Regex.Match(input, pattern);
-
-        // if a match is found, return the captured version number; otherwise, return an empty string
-        return match.Success ? match.Groups[1].Value : string.Empty;
+    private static void InstallMarketplace() {
+        Console.WriteLine("Installing Spicetify Marketplace...");
+        RunPowerShellCommand("Invoke-WebRequest -UseBasicParsing \"https://raw.githubusercontent.com/spicetify/spicetify-marketplace/main/resources/install.ps1\" | Invoke-Expression");
+        Console.Clear();
+        Console.WriteLine("Spicetify Marketplace installed successfully!");
+        AsciiArt.PrintThumbsUp();
+        _showBeginningAsciiArt = false;
+        Main(null);
     }
 
+    private static void RunSpicetifyCommand(string command, bool showElapsedTime = true, bool showOutput = true) {
+        _dateTime = DateTime.Now;
+        var startInfo = new ProcessStartInfo {
+            FileName = "spicetify",
+            Arguments = command,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = false
+        };
+        
+        if (showOutput)
+            Console.WriteLine("Running > \"" + startInfo.FileName + " " + startInfo.Arguments + "\" Program Output below:");
+        using var process = Process.Start(startInfo);
+        process!.WaitForExit();
+        var output = process.StandardOutput.ReadToEnd();
+        if (showOutput)
+            Console.WriteLine(output);
 
-    //check if the spicetify is on the latest version
-    static bool isSpicetifyUpToDate(string consoleoutput)
-    {
-        if (debug)
-        {
-            Console.WriteLine("Press any key to continue isSpicetifyUpToDate.\n");
-            Console.ReadKey();
-        }
-        //get the latest version of spicetify
-        string latestVersion = GetVersion(consoleoutput, "Latest release:");
-        //get the current version of spicetify
-        string currentVersion = GetVersion(consoleoutput, "Current version:");
-        if (debug)
-        {
-            Console.WriteLine("latest version: " + latestVersion);
-            Console.WriteLine("current version: " + currentVersion + "\n");
-        }
-
-        //if latest version or current versionis empty, return null
-        if (string.IsNullOrEmpty(latestVersion) || string.IsNullOrEmpty(currentVersion))
-        {
-            return false;
-        }
-        //compare the two
-        if (latestVersion == currentVersion)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    static void installSpicetify()
-    {
-        try
-        {
-            _stopwatch.Reset(); //timer for spicetify installation
-            _stopwatch.Start();
-            if (debug)
-            {
-                Console.WriteLine("Press any key to start the installation...\n");
-                Console.ReadKey();
-            }
-
-            //check if spicetify is installed
-            if (!isSpicetifyInstalled())
-                Console.WriteLine("Spicetify is not installed. Installing...");
-
+        if (command == "upgrade") {
+            Console.Write("Updating Spicetify...");
+            // Console.ForegroundColor = ConsoleColor.Green;
+            // Console.WriteLine(" (ignore the error below)");
+            // Console.ForegroundColor = DefaultColor;
             RunPowerShellCommand("iwr -useb https://raw.githubusercontent.com/spicetify/spicetify-cli/master/install.ps1 | iex");
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine("An error occurred while installing Spicetify.");
-            Console.WriteLine(ex.Message);
-            exit();
-        }
-    }
-
-
-    //check if spicetify is installed
-    static public bool isSpicetifyInstalled()
-    {
-        if (debug)
-        {
-            Console.WriteLine("Press any key to continue isSpicetifyInstalled.\n");
-            Console.ReadKey();
-        }
-        // Get the path to the user's AppData\Roaming folder
-        string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-
-        // Combine the path to Spicetify with the obtained AppData path
-        string spicetifyPath = Path.Combine(appDataPath, "Spicetify");
-
-        if (debug)
-        {
-            Console.WriteLine("spicetifyPath: " + spicetifyPath);
-            Console.ReadKey();
-        }
-
-        // Check if the Spicetify folder exists
-        return Directory.Exists(spicetifyPath);
-       
-    }
-
-    static void RunSpicetifyCommand(string arguments)
-    {
-        try
-        {
-            if (debug)
-            {
-                //check if the spicetify is installed
-                Console.WriteLine("isSpicetifyInstalled: " + isSpicetifyInstalled());
-                Console.WriteLine($"Click something to proceed to running the command ${arguments}\n");
-                Console.ReadKey();
-            }
-            if (isSpicetifyInstalled())
-            {
-                string output = "";
-                ProcessStartInfo startInfo = new ProcessStartInfo
-                {
-                    FileName = "spicetify",
-                    Arguments = arguments,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = false
-                };
-                using (Process process = Process.Start(startInfo))
-                {
-                    process.WaitForExit();
-                    output = process.StandardOutput.ReadToEnd();
-                }
-                    if (debug)
-                    {
-                        System.Console.WriteLine("\n\n\nOUTPUT TEST\n\n\n");
-                        System.Console.WriteLine(output);
-                        System.Console.WriteLine(isSpicetifyUpToDate(output)); //is it up to date?
-                        System.Console.WriteLine("\n\n\nOUTPUT TEST\n\n\n");
-                    }
-                    if (arguments == "upgrade")
-                    {
-                        if (debug)
-                        {
-                            Console.WriteLine("Press any key to continue RunSpicetifyCommand with upgrade.\n");
-                            Console.ReadKey();
-                        }
-                        if (!isSpicetifyUpToDate(output))
-                        {
-                            Console.Clear();
-                            Console.WriteLine("Update found. Updating to the latest version!\n");
-                            _stopwatch.Reset(); //timer for spicetify upgrade
-                            _stopwatch.Start();
-                            installSpicetify();
-                            RunSpicetifyCommand("restore backup apply");
-                            elapsed = _stopwatch.Elapsed;
-                            _stopwatch.Stop();
-                            Console.WriteLine("Spicetify upgrade completed successfully!");
-                            Console.WriteLine($"Elapsed Time: {elapsed.TotalSeconds.ToString("0.00")} seconds");
-                            
-                            PrintThumbsUp();
-                        }
-                        else
-                        {
-                            Console.WriteLine("No updates found. Do you want to re-install the latest version?\n");
-                            Console.WriteLine("Press 1 to re-install the latest version, press 2 to see a cool cat animation or press any other key to exit.\n");
-                            var a = Console.ReadKey();
-                            if (a.KeyChar == '1')
-                            {
-                                Console.Clear();
-                                Console.WriteLine("Reinstalling Spicetify...\n");
-                                _stopwatch.Reset(); //timer for spicetify upgrade
-                                _stopwatch.Start();
-                                installSpicetify();
-                                RunSpicetifyCommand("restore backup apply");
-                                elapsed = _stopwatch.Elapsed;
-                                _stopwatch.Stop();
-                                Console.WriteLine("Spicetify upgrade completed successfully!");
-                                Console.WriteLine($"Elapsed Time: {elapsed.TotalSeconds.ToString("0.00")} seconds");
-                                PrintThumbsUp();
-                            }
-                            else if (a.KeyChar == '2')
-                            {
-                                StartASCIIAnimation();
-                            }
-                            else
-                            {
-                                exit();
-                            }
-                            Thread.Sleep(500);
-                        }
-                    }
-                    else
-                    {
-                        if(debug)
-                            Console.WriteLine("Spicetify command completed successfully!");
-                    }
-                }
-                else
-                {
-                    System.Console.WriteLine("Spicetify is not installed. Click 1 to download Spicetify.\n");
-                    var a = Console.ReadKey();
-                    if (a.KeyChar == '1')
-                    {
-                        installSpicetify();
-                        RunSpicetifyCommand("backup apply");
-                        RunSpicetifyCommand("spicetify restore backup");
-                        RunSpicetifyCommand("spicetify backup");
-                    }
-                    else
-                    {
-                        exit();
-                    }
-                }
-        }
-        catch (Exception)
-        {
-            Console.WriteLine("An error occurred while running the Spicetify command. Make sure the Spicetify and Spotify is correctly downloaded. Or click 1 to start the process to download Spicetify.");
-            //readkey to start download
-            var a = Console.ReadKey();
-            if (a.KeyChar == '1')
-            {
-                installSpicetify();
-            }
-            else
-            {
-                exit();
-            }
-        }
-    } 
-
-
-
-    static void ASCIIAnimation()
-    {
-        if (debug)
-        {
-            Console.WriteLine("Press any key to start the animation...");
-            Console.ReadKey();
-        }
-        string anim1 = "             *     ,MMM8&&&.            *\r\n                  MMMM88&&&&&    .\r\n                 MMMM88&&&&&&&\r\n     *           MMM88&&&&&&&&\r\n                 MMM88&&&&&&&&\r\n                 'MMM88&&&&&&'\r\n                   'MMM8&&&'      *\r\n          |\\___/|\r\n          )     (             .              '\r\n         =\\     /=\r\n           )===(       *\r\n          /     \\\r\n          |     |\r\n         /       \\\r\n         \\       /\r\n  _/\\_/\\_/\\__  _/_/\\_/\\_/\\_/\\_/\\_/\\_/\\_/\\_/\\_\r\n  |  |  |  |( (  |  |  |  |  |  |  |  |  |  |\r\n  |  |  |  | ) ) |  |  |  |  |  |  |  |  |  |\r\n  |  |  |  |(_(  |  |  |  |  |  |  |  |  |  |\r\n  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |\r\n  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |";
-        string anim2 = "             *     ,MMM8&&&.            *\r\n                  MMMM88&&&&&    .\r\n                 MMMM88&&&&&&&\r\n     *           MMM88&&&&&&&&\r\n                 MMM88&&&&&&&&\r\n                 'MMM88&&&&&&'\r\n                   'MMM8&&&'      *\r\n          |\\___/|\r\n         =) ^Y^ (=            .              '\r\n          \\  ^  /\r\n           )=*=(       *\r\n          /     \\\r\n          |     |\r\n         /| | | |\\\r\n         \\| | |_|/\\\r\n  /\\__/\\_//_// ___/\\_/\\_/\\_/\\_/\\_/\\_/\\_/\\_/\\_\r\n  |  |  |  | \\_) |  |  |  |  |  |  |  |  |  |\r\n  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |\r\n  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |\r\n  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |\r\n  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |";
-        string anim3 = "             *     ,MMM8&&&.            *\r\n                  MMMM88&&&&&    .\r\n                 MMMM88&&&&&&&\r\n     *           MMM88&&&&&&&&\r\n                 MMM88&&&&&&&&\r\n                 'MMM88&&&&&&'\r\n                   'MMM8&&&'      *    _\r\n          |\\___/|                      \\\\\r\n         =) ^Y^ (=   |\\_/|              ||    '\r\n          \\  ^  /    )a a '._.-\"\"\"\"-.  //\r\n           )=*=(    =\\T_= /    ~  ~  \\//\r\n          /     \\     `\"`\\   ~   / ~  /\r\n          |     |         |~   \\ |  ~/\r\n         /| | | |\\         \\  ~/- \\ ~\\\r\n         \\| | |_|/|        || |  // /`\r\n  /\\__/\\_//_// __//\\_/\\_/\\_((_|\\((_//\\_/\\_/\\_\r\n  |  |  |  | \\_) |  |  |  |  |  |  |  |  |  |\r\n  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |\r\n  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |\r\n  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |\r\n  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |";
-        string anim4 = "            *     ,MMM8&&&.            *\r\n                  MMMM88&&&&&    .\r\n                 MMMM88&&&&&&&\r\n     *           MMM88&&&&&&&&\r\n                 MMM88&&&&&&&&\r\n                 'MMM88&&&&&&'\r\n                   'MMM8&&&'      *    \r\n          |\\___/|     /\\___/\\\r\n          )     (     )    ~( .              '\r\n         =\\     /=   =\\~    /=\r\n           )===(       ) ~ (\r\n          /     \\     /     \\\r\n          |     |     ) ~   (\r\n         /       \\   /     ~ \\\r\n         \\       /   \\~     ~/\r\n  /\\__/\\_/\\__  _/_/\\_/\\__~__/_/\\_/\\_/\\_/\\_/\\_\r\n  |  |  |  |( (  |  |  | ))  |  |  |  |  |  |\r\n  |  |  |  | ) ) |  |  |//|  |  |  |  |  |  |\r\n  |  |  |  |(_(  |  |  (( |  |  |  |  |  |  |\r\n  |  |  |  |  |  |  |  |\\)|  |  |  |  |  |  |\r\n  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |";
-        string anim5 = "             *     ,MMM8&&&.            *\r\n                  MMMM88&&&&&    .\r\n                 MMMM88&&&&&&&\r\n     *           MMM88&&&&&&&&\r\n                 MMM88&&&&&&&&\r\n                 'MMM88&&&&&&'\r\n                   'MMM8&&&'      *    \r\n           /\\/|_      __/\\\\\r\n          /    -\\    /-   ~\\  .              '\r\n          \\    = Y =T_ =   /\r\n           )==*(`     `) ~ \\\r\n          /     \\     /     \\\r\n          |     |     ) ~   (\r\n         /       \\   /     ~ \\\r\n         \\       /   \\~     ~/\r\n  /\\__/\\_/\\__  _/_/\\_/\\__~__/_/\\_/\\_/\\_/\\_/\\_\r\n  |  |  |  | ) ) |  |  | ((  |  |  |  |  |  |\r\n  |  |  |  |( (  |  |  |  \\\\ |  |  |  |  |  |\r\n  |  |  |  | )_) |  |  |  |))|  |  |  |  |  |\r\n  |  |  |  |  |  |  |  |  (/ |  |  |  |  |  |\r\n  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |";
-
-        //start a list with anims
-        List<string> anims = new List<string>{anim1,anim2,anim3,anim4,anim5};
-
-        //set console size and color
-        Console.SetWindowSize(50, 25);
-        Console.CursorVisible = false;
-        Console.BackgroundColor = ConsoleColor.DarkGray;
-        Console.ForegroundColor = ConsoleColor.Black;
-        if (debug)
-        {
-            Console.WriteLine("Animation started.");
-            Console.ReadKey();
-        }
-        else 
-        {
-            while (running) // loop until running is set to false
-            {
-                nextFrame(anims);
-            }
+        else if (command == "-v") {
+            _lastOutput = output.Trim();
         }
         
+        if (command != "-v")
+            AsciiArt.PrintThumbsUp();
+
+        if (!showElapsedTime) return;
+        var elapsed = DateTime.Now - _dateTime;
+        Console.WriteLine();
+        Console.WriteLine($"Operation completed successfully in {elapsed.TotalSeconds} seconds!");
+        Main(null);
     }
 
-    static void nextFrame(List<string> anims)
-    {
-        foreach (string anim in anims)
-        {
-            if (running)
-            {
-                Console.Clear();
-                Console.WriteLine(anim);
-                Console.WriteLine("Press 1 to stop animation's loop and exit.");
-                Thread.Sleep(1400);
-                checkKey();
-            }
-
+    private static void Exit() {
+        Console.Title = "Spicetify Updater - Bye!";
+        AsciiArt.PrintBye();
+        if (IsWindows && IsPlayerRunning) {
+            Player.Stop();
+            Player.Dispose();
         }
-    }
 
-    static void checkKey()
-    {
-        if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.D1)
-        {
-            //close program
-            player.Stop();
-            running = false;
-            exit();
-        }
+        Console.Write("Press any key to exit.");
+        Console.ReadKey();
+        Environment.Exit(0);
     }
 }
