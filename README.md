@@ -16,7 +16,7 @@
 ---
 
 - **Repository Name: spicetify-updater**
-- **Latest Version: v3.0.0**
+- **Latest Version: v2.0.0**
 
 ---
 
