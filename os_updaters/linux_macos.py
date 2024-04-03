@@ -15,18 +15,6 @@ def install_spicetify():
     print("Downloading Spicetify install script...")
     subprocess.run(download_cmd, shell=True, check=True)
 
-    # Ask the user if they want to install the Marketplace too
-    marketplace_install = (
-        input("Do you want to install the Marketplace too? (Y/N): ").strip().lower()
-    )
-
-    # Since the script might not support direct input for Marketplace installation,
-    # inform the user how to install it manually if they choose yes.
-    if marketplace_install in ["y", "yes"]:
-        print(
-            "Please run 'spicetify marketplace install' after the installation completes to install the Marketplace."
-        )
-
     run_cmd = f"sh {script_path}"
 
     try:
@@ -35,9 +23,22 @@ def install_spicetify():
     except subprocess.CalledProcessError as e:
         print(f"Failed to install Spicetify CLI. {str(e)}")
 
+    try:
+        subprocess.run(["spicetify", "backup"], check=True)
+        subprocess.run(["sudo", "chmod", "a+wr", "/usr/share/spotify"], check=True)
+        subprocess.run(
+            ["sudo", "chmod", "a+wr", "/usr/share/spotify/Apps", "-R"], check=True
+        )
+        subprocess.run(["spicetify", "apply"], check=True)
+        print("Spicetify backup applied successfully.")
+    except subprocess.CalledProcessError as e:
+        print(
+            f"Failed to apply Spicetify backup. {str(e)}. Please try applying manually with 'spicetify apply'."
+        )
+
 
 def is_spicetify_installed():
-    """Checks if Spicetify is installed by running the 'spicetify' command."""
+    """Checks if Spicetify is installed by running the 'spicetify --version' command."""
     try:
         subprocess.run(
             ["spicetify", "--version"],
@@ -46,7 +47,7 @@ def is_spicetify_installed():
             stderr=subprocess.DEVNULL,
         )
         return True
-    except subprocess.CalledProcessError:
+    except:
         return False
 
 
@@ -89,13 +90,14 @@ def is_spicetify_up_to_date():
 
 if __name__ == "__main__":
     # Example usage
-    if not is_spicetify_installed():
-        print("Spicetify is not installed. Installing Spicetify...")
-        install_spicetify()
-    else:
-        print("Spicetify is already installed.")
+    # if not is_spicetify_installed():
+    #     print("Spicetify is not installed. Installing Spicetify...")
+    #     install_spicetify()
+    # else:
+    #     print("Spicetify is already installed.")
+    install_spicetify()
 
-        if is_spicetify_up_to_date():
-            print("Spicetify is up to date.")
-        else:
-            print("Spicetify is not up to date. Please update manually.")
+    if is_spicetify_up_to_date():
+        print("Spicetify is up to date.")
+    else:
+        print("Spicetify is not up to date. Please update manually.")
