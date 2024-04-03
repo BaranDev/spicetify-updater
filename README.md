@@ -1,4 +1,4 @@
-# Spicetify Updater with Cool Cat Animation
+# Spicetify Updater
 
 ## Introduction
 This Python application automates the updating process of Spicetify, a CLI tool for customizing Spotify. It checks for Spicetify's installation, updates it if necessary, and offers an entertaining ASCII cool cat animation with background music as a bonus feature. The script supports both Windows and Linux/macOS systems, ensuring a broad compatibility range.
