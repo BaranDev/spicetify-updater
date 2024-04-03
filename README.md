@@ -1,53 +1,44 @@
-**Instructions:**
+# Spicetify Updater with Cool Cat Animation
 
+## Introduction
+This Python application automates the updating process of Spicetify, a CLI tool for customizing Spotify. It checks for Spicetify's installation, updates it if necessary, and offers an entertaining ASCII cool cat animation with background music as a bonus feature. The script supports both Windows and Linux/macOS systems, ensuring a broad compatibility range.
 
-1. Download the latest release package for your operating system.
-2. Extract the contents to a convenient location.
-3. Run the Spicetify Updater CLI executable to begin the update/download process
-     1. Enjoy the music!
-4. Follow the prompts and enjoy the updated Spicetify experience on Spotify.
-5. Create a desktop shortcut for `spicetify-updater.exe`:
-    1. *Right-click on the executable.*
-    2. *Navigate to "Send To".*
-    3. *Choose "Desktop (create shortcut)".*
-6. Enjoy!  
-# Spicetify Updater CLI
+## Features
+- Checks and prompts for Spicetify installation if not found.
+- Automatically updates Spicetify to the latest version if it's outdated.
+- Entertains you with an ASCII art cool cat animation accompanied by background music (played by me).
+- Offers cross-platform support, running seamlessly on Windows, Linux, and macOS.
 
----
+## Setup
 
-- **Repository Name: spicetify-updater**
-- **Latest Version: v1.0.0**
+### Prerequisites
+- Python 3.6 or higher.
+- Dependencies include Pygame for audio playback and the Keyboard library for detecting key presses.
 
----
+### Installation
+1. Clone the repository to your local machine:
+```
+git clone https://your-repository-url.git
+```
+2. Navigate to the project directory:
+```
+cd spicetify-updater
+```
+3. Install the necessary Python packages:
+```
+pip install -r requirements.txt
+```
 
-**Description:**
+## Usage
+To run the script, execute the following command in your terminal:
+```
+python main.py
+```
 
-Simplify the process of updating Spicetify, a powerful customization utility for Spotify, with this command-line tool. Enhance your Spotify experience effortlessly. Also can download Spicetify for you!
+Follow the on-screen prompts to update Spicetify or enjoy the cool cat animation.
 
----
+## Contributing
+Contributions to enhance the project are warmly welcomed. Feel free to submit pull requests or open issues for any bugs you encounter or feature suggestions you might have.
 
-**Requirements:**
-
-- .NET Core 3.1 or later.
-- Spotify client on your system(see notes).
-- Spotify account.
-- A reason to live. *(optional)*
-
----
-
-**Summary:**
-
-The Spicetify Updater CLI provides a convenient way to update Spicetify and its associated components directly from the command line. Save time and effort by automating the update process, ensuring you have access to the latest features and customization options for Spotify.
-
----
-**Notes:**
-- Please be advised that this updater may encounter difficulties updating Spicetify if you are using the Microsoft Store version of Spotify rather than the desktop version.
-- **[Click Here to download Spotify.](https://www.spotify.com/us/download/other/)**
-  
-          https://www.spotify.com/us/download/other/
----
-
-**Credits:**
-
-- ASCII Art: [https://user.xmission.com/~emailbox](https://user.xmission.com/~emailbox)
-- Music: Pokemon Emerald - Littleroot Town *(played by me!)*
+## License
+This project is released under the MIT License. See the [LICENSE](LICENSE.md) file for more details.
