@@ -9,6 +9,9 @@ else:
     from os_updaters import linux_macos as os_updater
 
 SPICETIFY_INSTALLED = os_updater.is_spicetify_installed()
+from os import environ
+
+environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 
 
 def main():
