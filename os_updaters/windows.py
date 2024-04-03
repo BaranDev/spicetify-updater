@@ -113,6 +113,7 @@ def is_spicetify_up_to_date():
 
 # CHECKLIST FOR TESTING THIS SCRIPT:
 # Windows Versions:
+#   [ ] Windows 11
 #   [✔] Windows 10
 #   [ ] Windows 8.1
 #   [ ] Windows 7

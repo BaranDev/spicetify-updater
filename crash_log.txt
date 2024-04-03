@@ -1,0 +1,9 @@
+21:58:14 -- Traceback (most recent call last):
+  File "c:\Users\PC\Desktop\vsc git clones\spicetify-updater\console_helper.py", line 41, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\PC\Desktop\vsc git clones\spicetify-updater\console_helper.py", line 162, in main_menu
+    side_str += f"{string:<{self.side_spacing}}"
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: Sign not allowed in string format specifier
+
