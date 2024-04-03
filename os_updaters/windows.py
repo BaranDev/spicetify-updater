@@ -91,21 +91,28 @@ def is_spicetify_up_to_date():
         return False
 
 
-if __name__ == "__main__":
-    # Test is_spicetify_installed()
-    if is_spicetify_installed():
-        print("Spicetify is installed.")
-    else:
-        print("Spicetify is not installed.")
+# UNIT TEST
+# if __name__ == "__main__":
+#     # Test is_spicetify_installed()
+#     if is_spicetify_installed():
+#         print("Spicetify is installed.")
+#     else:
+#         print("Spicetify is not installed.")
 
-    # Test get_latest_spicetify_version()
-    latest_version = get_latest_spicetify_version()
-    current_version = get_current_spicetify_version()
-    if latest_version and current_version:
-        print(f"Latest Spicetify version: {latest_version}")
-        print(f"Current Spicetify version: {current_version}")
-    else:
-        print("Failed to fetch latest Spicetify version.")
+#     # Test get_latest_spicetify_version()
+#     latest_version = get_latest_spicetify_version()
+#     current_version = get_current_spicetify_version()
+#     if latest_version and current_version:
+#         print(f"Latest Spicetify version: {latest_version}")
+#         print(f"Current Spicetify version: {current_version}")
+#     else:
+#         print("Failed to fetch latest Spicetify version.")
 
-    # Test install_marketplace()
-    install_spicetify()
+#     # Test install_marketplace()
+#     install_spicetify()
+
+# CHECKLIST FOR TESTING THIS SCRIPT:
+# Windows Versions:
+#   [✔] Windows 10
+#   [ ] Windows 8.1
+#   [ ] Windows 7

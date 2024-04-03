@@ -88,16 +88,26 @@ def is_spicetify_up_to_date():
         return False
 
 
+# UNIT TEST
 if __name__ == "__main__":
-    # Example usage
-    # if not is_spicetify_installed():
-    #     print("Spicetify is not installed. Installing Spicetify...")
-    #     install_spicetify()
-    # else:
-    #     print("Spicetify is already installed.")
-    install_spicetify()
+    if not is_spicetify_installed():
+        print("spicetify is not installed. installing spicetify...")
+        install_spicetify()
+    else:
+        print("spicetify is already installed.")
 
     if is_spicetify_up_to_date():
-        print("Spicetify is up to date.")
+        print("spicetify is up to date.")
     else:
-        print("Spicetify is not up to date. Please update manually.")
+        print("spicetify is not up to date. please update manually.")
+
+# CHECKLIST FOR TESTING THIS SCRIPT:
+# Linux Distros:
+#   [✔] Ubuntu (Latest LTS and the most recent release)
+#   [ ] Fedora (Latest release)
+#   [ ] Debian (Stable release)
+#   [ ] CentOS (Latest release - Note: transitioning to CentOS Stream)
+#   [ ] Arch Linux (Rolling release)
+#   [ ] OpenSUSE (Leap and Tumbleweed)
+# macOS Versions:
+#   [ ] The latest version of macOS
