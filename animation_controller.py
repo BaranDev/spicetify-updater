@@ -18,7 +18,7 @@ def play_cool_cat_animation():
 
     print("Press Enter to exit...")
     for frame in CAT_FRAMES:
-        if keyboard.on_press:  # Check if Enter key has been pressed
+        if keyboard.is_pressed("enter"):  # Check if Enter key has been pressed
             break  # Exit the loop if Enter is pressed
         print("\033c", end="")  # Clear the console
         print(frame)
