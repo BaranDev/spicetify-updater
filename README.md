@@ -41,4 +41,4 @@ Follow the on-screen prompts to update Spicetify or enjoy the cool cat animation
 Contributions to enhance the project are warmly welcomed. Feel free to submit pull requests or open issues for any bugs you encounter or feature suggestions you might have.
 
 ## License
-This project is released under the MIT License. See the [LICENSE](LICENSE.md) file for more details.
+This project is released under the MIT License. See the [LICENSE](LICENSE.txt) file for more details.
