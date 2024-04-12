@@ -2,6 +2,8 @@ import time
 from styling import CAT_FRAMES, THUMBS_UP
 import keyboard
 from os import environ
+import sys
+import os
 
 environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 import pygame
@@ -10,9 +12,21 @@ import pygame
 pygame.mixer.init()
 
 
+def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+
 def play_cool_cat_animation():
+    wav_path = resource_path("resources/littleroottown.wav")
     # Load the background music
-    pygame.mixer.music.load("resources/littleroottown.wav")
+    pygame.mixer.music.load(wav_path)
     # Play the music
     pygame.mixer.music.play(-1)  # The -1 argument makes the music loop indefinitely
 

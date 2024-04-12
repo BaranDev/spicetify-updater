@@ -5,8 +5,12 @@ from console_helper import display_menu
 # Conditional import based on the OS
 if platform.system() == "Windows":
     from os_updaters import windows as os_updater
-else:
+elif platform.system() in ["Linux", "Darwin"]:
     from os_updaters import linux_macos as os_updater
+else:
+    print("Unsupported OS detected. Exiting...")
+    input("Press Enter to exit.")
+    exit(1)
 
 SPICETIFY_INSTALLED = os_updater.is_spicetify_installed()
 from os import environ
@@ -32,7 +36,7 @@ def main():
             "An update for Spicetify is available. Would you like to update? (Y/N): "
         ).lower()
         if user_choice == "y":
-            os_updater.update_spicetify()
+            os_updater.install_spicetify()
             print("Spicetify has been updated.")
         else:
             print("Spicetify update skipped.")
