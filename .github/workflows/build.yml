@@ -1,0 +1,67 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: spicetify-updater.exe
+          - os: ubuntu-latest
+            artifact: spicetify-updater-linux
+          - os: macos-latest
+            artifact: spicetify-updater-macos
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install pyinstaller requests
+
+      - name: Build executable
+        run: |
+          pyinstaller --onefile --name spicetify-updater --clean --noconfirm main.py
+
+      - name: Rename artifact (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: mv dist/spicetify-updater dist/${{ matrix.artifact }}
+
+      - name: Rename artifact (macOS)
+        if: matrix.os == 'macos-latest'
+        run: mv dist/spicetify-updater dist/${{ matrix.artifact }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.artifact }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true
