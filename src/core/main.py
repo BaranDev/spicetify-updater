@@ -3,24 +3,37 @@ Spicetify Updater - main application logic.
 
 Flow:
   1. Detect OS and load the appropriate updater module.
-  2. Check if Spicetify is installed; offer to install if not.
-  3. Check for updates via the GitHub API.
-  4. Upgrade or re-apply as needed.
+  2. Run pre-flight checks (Spotify installed, correct version, prefs exist).
+  3. Check if Spicetify is installed; offer to install if not.
+  4. Check for updates via the GitHub API.
+  5. Upgrade or re-apply as needed.
 """
 
 import platform
 import logging
 import sys
-import os
+import traceback
 
-# Configure logging once at the top level
+# ---------------------------------------------------------------------------
+# Safe logging setup - don't crash if we can't write a log file
+# ---------------------------------------------------------------------------
+
+_stream_handler = logging.StreamHandler()
+_stream_handler.setLevel(logging.WARNING)  # Users only see warnings/errors
+
+_log_handlers = [_stream_handler]
+
+try:
+    _file_handler = logging.FileHandler("spicetify-updater.log", encoding="utf-8")
+    _file_handler.setLevel(logging.DEBUG)  # Full diagnostics in the log file
+    _log_handlers.append(_file_handler)
+except (OSError, PermissionError):
+    pass  # Read-only filesystem or locked file; continue without file logging
+
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s %(levelname)s %(message)s",
-    handlers=[
-        logging.FileHandler("spicetify-updater.log", encoding="utf-8"),
-        logging.StreamHandler(),
-    ],
+    handlers=_log_handlers,
 )
 logger = logging.getLogger(__name__)
 
@@ -59,6 +72,26 @@ from src.ui.console_helper import (
 def main():
     print_header()
 
+    # --- Pre-flight checks ---
+    print_status("Running pre-flight checks...")
+    issues = updater.verify_prerequisites()
+
+    has_errors = False
+    for level, message in issues:
+        if level == "error":
+            print_error(message)
+            has_errors = True
+        else:
+            print_warning(message)
+
+    if has_errors:
+        press_enter_to_exit(1)
+
+    # If there were only warnings, ask to continue
+    if issues:
+        if not ask_yes_no("Continue anyway?"):
+            press_enter_to_exit(0)
+
     # --- Step 1: Is Spicetify installed? ---
     print_status("Checking if Spicetify is installed...")
 
@@ -70,6 +103,14 @@ def main():
                 print_success("Spicetify installed.")
             except RuntimeError as exc:
                 print_error(str(exc))
+                press_enter_to_exit(1)
+
+            # Verify it actually made it into PATH
+            if not updater.is_spicetify_installed():
+                print_warning(
+                    "Spicetify was installed but is not available in your PATH yet.\n"
+                    "    Close this window, open a new terminal, and run this tool again."
+                )
                 press_enter_to_exit(1)
 
             # Offer to install Marketplace
@@ -135,5 +176,26 @@ def main():
     press_enter_to_exit(0)
 
 
+# ---------------------------------------------------------------------------
+# Entry point with top-level exception handling
+# ---------------------------------------------------------------------------
+
+
+def _safe_main():
+    """Wrapper that catches all unhandled exceptions."""
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n")
+        print_warning("Interrupted by user.")
+        press_enter_to_exit(130)
+    except Exception as exc:
+        logger.exception("Unhandled exception")
+        print("\n")
+        print_error(f"An unexpected error occurred: {exc}")
+        print_status("Details have been written to spicetify-updater.log (if available).")
+        press_enter_to_exit(1)
+
+
 if __name__ == "__main__":
-    main()
+    _safe_main()

@@ -11,7 +11,8 @@ if __name__ == "__main__":
     # Add the current directory to the path so imports work
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-    # Import and run the main function from the core module
-    from src.core.main import main
+    # Import and run via the safe wrapper (catches all unhandled exceptions)
+    from src.core.main import _safe_main
 
-    main()
+    _safe_main()
+

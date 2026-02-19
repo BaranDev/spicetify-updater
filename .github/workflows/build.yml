@@ -15,10 +15,13 @@ jobs:
         include:
           - os: windows-latest
             artifact: spicetify-updater.exe
+            icon: assets/icons/barandev-logo-sq.ico
           - os: ubuntu-latest
             artifact: spicetify-updater-linux
+            icon: assets/icons/barandev-logo-sq.ico
           - os: macos-latest
             artifact: spicetify-updater-macos
+            icon: assets/icons/barandev-logo-sq.icns
 
     runs-on: ${{ matrix.os }}
 
@@ -34,7 +37,7 @@ jobs:
 
       - name: Build executable
         run: |
-          pyinstaller --onefile --name spicetify-updater --clean --noconfirm main.py
+          pyinstaller --onefile --name spicetify-updater --icon ${{ matrix.icon }} --clean --noconfirm main.py
 
       - name: Rename artifact (Linux)
         if: matrix.os == 'ubuntu-latest'
